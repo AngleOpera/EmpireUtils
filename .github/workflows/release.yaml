@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        description: Tag to release
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ${{ matrix.config.os }}
+
+    strategy:
+      matrix:
+        config:
+          - os: macos-latest
+            flags: '--arch x64'
+          - os: ubuntu-latest
+            flags: ''
+          - os: windows-latest
+            flags: ''
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag }}
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18.20.0
+
+      - name: Publish app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: yarn && yarn publish-app ${{ matrix.config.flags }}
